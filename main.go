@@ -101,11 +101,12 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 	err := a.DB.QueryRow(context.Background(), `SELECT original_url FROM urls WHERE id = $1`, id).Scan(&original_url)
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		http.Redirect(w, r, original_url, http.StatusFound)
 
-	http.Redirect(w, r, original_url, http.StatusFound)
+	}
 
 }
 
