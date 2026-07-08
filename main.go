@@ -137,6 +137,6 @@ func main() {
 	mux.HandleFunc("GET /{$}", homeHandler)
 	port := os.Getenv("PORT")
 	fmt.Println("Server started at port ", port)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port, mux)
 
 }
