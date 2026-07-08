@@ -103,7 +103,7 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 	id := decode(code)
 
 	var original_url string
-	err := a.DB.QueryRow(context.Background(), `SELECT original_url FROM url WHERE id = $1`, id).Scan(&original_url)
+	err := a.DB.QueryRow(context.Background(), `SELECT original_url FROM urls WHERE id = $1`, id).Scan(&original_url)
 
 	if err != nil {
 		fmt.Println(err)
