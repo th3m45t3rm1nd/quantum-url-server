@@ -103,6 +103,7 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid url"})
 	} else {
 		http.Redirect(w, r, original_url, http.StatusFound)
 	}
