@@ -73,7 +73,7 @@ func (a *App) shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var id uint64
-	err := a.DB.QueryRow(context.Background(), `SELECT nextval('url_id_seq')`).Scan(&id)
+	err := a.DB.QueryRow(context.Background(), `SELECT nextval('urls_id_seq')`).Scan(&id)
 
 	if err != nil {
 		fmt.Println(err)
@@ -82,7 +82,7 @@ func (a *App) shorten(w http.ResponseWriter, r *http.Request) {
 
 	code := encode(id)
 
-	_, err = a.DB.Exec(context.Background(), `INSERT INTO url (id, code, original_url) VALUES ($1, $2, $3)`, id, code, req.URL)
+	_, err = a.DB.Exec(context.Background(), `INSERT INTO urls (id, code, original_url) VALUES ($1, $2, $3)`, id, code, req.URL)
 
 	if err != nil {
 		fmt.Println(err)
