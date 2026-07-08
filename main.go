@@ -60,11 +60,6 @@ type ShortenResponse struct {
 }
 
 func (a *App) shorten(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed for this endpoint", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var req ShortenRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -114,9 +109,13 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// func redirect() {
-//
-// }
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	fmt.Fprintln(w, "url shortener — th3m45t3rm1nd")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "POST /shorten  {\"url\": \"https://example.com\"}")
+	fmt.Fprintln(w, "GET  /{code}   302 redirect")
+}
 
 func main() {
 
@@ -132,9 +131,12 @@ func main() {
 	app := &App{
 		DB: pool,
 	}
-	http.HandleFunc("/shorten", app.shorten)
-	http.HandleFunc("/", app.get_code)
-	fmt.Println("Server started at port 5000")
-	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /shorten", app.shorten)
+	mux.HandleFunc("GET /{code}", app.get_code)
+	mux.HandleFunc("GET /{$}", homeHandler)
+	port := os.Getenv("PORT")
+	fmt.Println("Server started at port ", port)
+	http.ListenAndServe(":"+port, nil)
 
 }
