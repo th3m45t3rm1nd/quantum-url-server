@@ -105,7 +105,6 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		http.Redirect(w, r, original_url, http.StatusFound)
-
 	}
 
 }
