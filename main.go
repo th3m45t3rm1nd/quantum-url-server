@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/cors"
 )
 
 type App struct {
@@ -136,8 +137,17 @@ func main() {
 	mux.HandleFunc("POST /shorten", app.shorten)
 	mux.HandleFunc("GET /{code}", app.get_code)
 	mux.HandleFunc("GET /{$}", homeHandler)
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:5173",
+		},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	})
+
+	handler := c.Handler(mux)
 	port := os.Getenv("PORT")
 	fmt.Println("Server started at port ", port)
-	http.ListenAndServe(":"+port, mux)
+	http.ListenAndServe(":"+port, handler)
 
 }
