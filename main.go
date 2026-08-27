@@ -58,6 +58,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /shorten", app.shorten)
 	mux.HandleFunc("GET /{code}", app.get_code)
+
 	mux.HandleFunc("GET /{$}", homeHandler)
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -68,7 +69,10 @@ func main() {
 	})
 
 	handler := c.Handler(mux)
+
+	limiter := newLimiter(10, 1)
+	wrapped := rateLimitMiddleware(limiter, handler)
 	port := os.Getenv("PORT")
 	fmt.Println("Server started at port ", port)
-	http.ListenAndServe(":"+port, handler)
+	log.Fatal(http.ListenAndServe(":"+port, wrapped))
 }

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"net"
+	"net/http"
 	"strings"
+	"sync"
+	"time"
 )
 
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -38,4 +42,72 @@ func decode(str string) uint64 {
 
 	return uint64(out)
 
+}
+
+type bucket struct {
+	tokens     float64
+	lastRefill time.Time
+}
+
+type rateLimiter struct {
+	mu       sync.Mutex
+	bucket   map[string]*bucket
+	capacity float64
+	rate     float64
+}
+
+func newLimiter(capacity, rate float64) *rateLimiter {
+	l := &rateLimiter{
+		bucket:   make(map[string]*bucket),
+		capacity: capacity,
+		rate:     rate,
+	}
+	go l.sweep()
+	return l
+}
+
+func (l *rateLimiter) sweep() {
+	for {
+		time.Sleep(5 * time.Minute)
+		l.mu.Lock()
+
+		for ip, b := range l.bucket {
+			if time.Since(b.lastRefill) > 10*time.Minute {
+				delete(l.bucket, ip)
+			}
+		}
+
+		l.mu.Unlock()
+	}
+}
+
+func (l *rateLimiter) allow(ip string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	b, exists := l.bucket[ip]
+
+	if !exists {
+		b = &bucket{l.capacity, time.Now()}
+		l.bucket[ip] = b
+	}
+
+	elapsed := time.Since(b.lastRefill).Seconds()
+	b.tokens = min(l.capacity, b.tokens+elapsed*l.rate)
+	b.lastRefill = time.Now()
+
+	if b.tokens >= 1 {
+		b.tokens--
+		return true
+	}
+
+	return false
+}
+
+func clientIP(r *http.Request) string {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
 }

@@ -10,6 +10,21 @@ import (
 	"time"
 )
 
+func rateLimitMiddleware(l *rateLimiter, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions || r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if !l.allow(clientIP(r)) {
+			http.Error(w, "Too many requests", http.StatusTooManyRequests)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+
+}
+
 func (a *App) shorten(w http.ResponseWriter, r *http.Request) {
 
 	var req ShortenRequest
