@@ -13,7 +13,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		log.Println("no .env file found, relying on system vars")
 	}
 
 	pool, err := initDB()
