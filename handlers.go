@@ -16,6 +16,7 @@ func rateLimitMiddleware(l *rateLimiter, next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		log.Println("RemoteAddr:", r.RemoteAddr)
 		if !l.allow(clientIP(r)) {
 			http.Error(w, "Too many requests", http.StatusTooManyRequests)
 			return
