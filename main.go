@@ -73,6 +73,7 @@ func main() {
 	limiter := newLimiter(10, 1)
 	wrapped := rateLimitMiddleware(limiter, handler)
 	port := os.Getenv("PORT")
-	fmt.Println("Server started at port ", port)
+	log.Println("Server started at port ", port)
+	go startClickWorker(pool)
 	log.Fatal(http.ListenAndServe(":"+port, wrapped))
 }

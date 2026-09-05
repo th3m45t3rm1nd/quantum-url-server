@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -110,4 +114,26 @@ func clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return ip
+}
+
+type clickEvent struct {
+	Code      string
+	Timestamp time.Time
+	UserAgent string
+	Referrer  string
+}
+
+var clickChan = make(chan clickEvent, 1000)
+
+func startClickWorker(pool *pgxpool.Pool) {
+	go func() {
+		for evt := range clickChan {
+			_, err := pool.Exec(context.Background(),
+				"INSERT INTO clicks (code, clicked_at, user_agent, referrer) VALUES ($1, $2, $3, $4)",
+				evt.Code, evt.Timestamp, evt.UserAgent, evt.Referrer)
+			if err != nil {
+				log.Printf("click insert failed: %v", err)
+			}
+		}
+	}()
 }

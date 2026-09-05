@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,12 +21,14 @@ func initDB() (*pgxpool.Pool, error) {
 }
 
 func initRedis() (*redis.Client, error) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_URL"),
-	})
+	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	rdb := redis.NewClient(opt)
 
 	ctx := context.Background()
-	err := rdb.Ping(ctx).Err()
+	err = rdb.Ping(ctx).Err()
 
 	return rdb, err
 }

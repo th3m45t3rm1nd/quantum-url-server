@@ -96,13 +96,18 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 	if a.Redis != nil {
 		cachedURL, err := a.Redis.Get(context.Background(), cacheKey).Result()
 		if err == nil {
+			select {
+			case clickChan <- clickEvent{Code: code, Timestamp: time.Now(), UserAgent: r.UserAgent(), Referrer: r.Referer()}:
+			default:
+				log.Println("click event dropped - channel full")
+			}
 			http.Redirect(w, r, cachedURL, http.StatusFound)
-			fmt.Println("CACHE HIT")
+			log.Println("CACHE HIT")
 			return
 		}
 	}
-	fmt.Println("CACHE MISS", cacheKey)
-	fmt.Println("DB LOOKUP:", cacheKey)
+	log.Println("CACHE MISS", cacheKey)
+	log.Println("DB LOOKUP:", cacheKey)
 
 	var original_url string
 	err := a.DB.QueryRow(context.Background(), `SELECT original_url FROM urls WHERE code = $1`, code).Scan(&original_url)
@@ -118,7 +123,12 @@ func (a *App) get_code(w http.ResponseWriter, r *http.Request) {
 			original_url,
 			time.Hour,
 		).Err()
-		fmt.Println("CACHE SET:", cacheKey)
+		log.Println("CACHE SET:", cacheKey)
+		select {
+		case clickChan <- clickEvent{Code: code, Timestamp: time.Now(), UserAgent: r.UserAgent(), Referrer: r.Referer()}:
+		default:
+			log.Println("click event dropped - channel full")
+		}
 		http.Redirect(w, r, original_url, http.StatusFound)
 	}
 
