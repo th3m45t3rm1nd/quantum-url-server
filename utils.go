@@ -102,9 +102,11 @@ func (l *rateLimiter) allow(ip string) bool {
 
 	if b.tokens >= 1 {
 		b.tokens--
+		log.Printf("ALLOWED — tokens now %.2f", b.tokens)
 		return true
 	}
 
+	log.Printf("BLOCKED — tokens now %.2f", b.tokens)
 	return false
 }
 
