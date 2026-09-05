@@ -57,7 +57,7 @@ func (a *App) shorten(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println(err)
-			http.Error(w, "Failed to create an alias", http.StatusInternalServerError)
+			http.Error(w, "Failed to create an alias", http.StatusConflict)
 			return
 		}
 
